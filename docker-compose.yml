@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+
+  library-service:
+    build:
+      context: library-service
+      dockerfile: library-service.dockerfile
+    restart: always
+    ports:
+      - "8080:80"
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      DSN: "host=postgres port=5432 user=postgres password=password dbname=library sslmode=disable timezone=UTC connect_timeout=5"
+
+  jwt-service:
+    build:
+      context: jwt-service
+      dockerfile: jwt-service.dockerfile
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  postgres:
+    image: 'postgres:14.0'
+    ports:
+      - "5432:5432"
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: library
+    volumes:
+      - ./db-data/postgres/:/var/lib/postgresql/data/

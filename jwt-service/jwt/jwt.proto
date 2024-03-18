@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package jwt;
+
+option go_package = "/jwt";
+
+message JwtRequest {
+  string username = 1;
+}
+
+message JwtResponse {
+  string token = 1;
+}
+
+service JwtService {
+  rpc generateToken(JwtRequest) returns (JwtResponse);
+}
