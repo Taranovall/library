@@ -22,7 +22,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type JwtServiceClient interface {
-	GenerateToken(ctx context.Context, in *JwtRequest, opts ...grpc.CallOption) (*JwtResponse, error)
+	GenerateToken(ctx context.Context, in *JwtUsername, opts ...grpc.CallOption) (*JwtString, error)
+	ParseToken(ctx context.Context, in *JwtString, opts ...grpc.CallOption) (*JwtUsername, error)
 }
 
 type jwtServiceClient struct {
@@ -33,9 +34,18 @@ func NewJwtServiceClient(cc grpc.ClientConnInterface) JwtServiceClient {
 	return &jwtServiceClient{cc}
 }
 
-func (c *jwtServiceClient) GenerateToken(ctx context.Context, in *JwtRequest, opts ...grpc.CallOption) (*JwtResponse, error) {
-	out := new(JwtResponse)
+func (c *jwtServiceClient) GenerateToken(ctx context.Context, in *JwtUsername, opts ...grpc.CallOption) (*JwtString, error) {
+	out := new(JwtString)
 	err := c.cc.Invoke(ctx, "/jwt.JwtService/generateToken", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *jwtServiceClient) ParseToken(ctx context.Context, in *JwtString, opts ...grpc.CallOption) (*JwtUsername, error) {
+	out := new(JwtUsername)
+	err := c.cc.Invoke(ctx, "/jwt.JwtService/parseToken", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +56,8 @@ func (c *jwtServiceClient) GenerateToken(ctx context.Context, in *JwtRequest, op
 // All implementations must embed UnimplementedJwtServiceServer
 // for forward compatibility
 type JwtServiceServer interface {
-	GenerateToken(context.Context, *JwtRequest) (*JwtResponse, error)
+	GenerateToken(context.Context, *JwtUsername) (*JwtString, error)
+	ParseToken(context.Context, *JwtString) (*JwtUsername, error)
 	mustEmbedUnimplementedJwtServiceServer()
 }
 
@@ -54,8 +65,11 @@ type JwtServiceServer interface {
 type UnimplementedJwtServiceServer struct {
 }
 
-func (UnimplementedJwtServiceServer) GenerateToken(context.Context, *JwtRequest) (*JwtResponse, error) {
+func (UnimplementedJwtServiceServer) GenerateToken(context.Context, *JwtUsername) (*JwtString, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GenerateToken not implemented")
+}
+func (UnimplementedJwtServiceServer) ParseToken(context.Context, *JwtString) (*JwtUsername, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ParseToken not implemented")
 }
 func (UnimplementedJwtServiceServer) mustEmbedUnimplementedJwtServiceServer() {}
 
@@ -71,7 +85,7 @@ func RegisterJwtServiceServer(s grpc.ServiceRegistrar, srv JwtServiceServer) {
 }
 
 func _JwtService_GenerateToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(JwtRequest)
+	in := new(JwtUsername)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -83,7 +97,25 @@ func _JwtService_GenerateToken_Handler(srv interface{}, ctx context.Context, dec
 		FullMethod: "/jwt.JwtService/generateToken",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(JwtServiceServer).GenerateToken(ctx, req.(*JwtRequest))
+		return srv.(JwtServiceServer).GenerateToken(ctx, req.(*JwtUsername))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _JwtService_ParseToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(JwtString)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(JwtServiceServer).ParseToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/jwt.JwtService/parseToken",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(JwtServiceServer).ParseToken(ctx, req.(*JwtString))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -98,6 +130,10 @@ var JwtService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "generateToken",
 			Handler:    _JwtService_GenerateToken_Handler,
+		},
+		{
+			MethodName: "parseToken",
+			Handler:    _JwtService_ParseToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

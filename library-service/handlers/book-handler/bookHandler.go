@@ -1,18 +1,13 @@
 package book_handler
 
 import (
-	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	book_controllers "library-service/controllers/book-controllers"
-	"library-service/jwt"
 	"library-service/utils"
 	"net/http"
 	"strconv"
-	"time"
 )
 
 type bookHandler struct {
@@ -107,20 +102,4 @@ func (h *bookHandler) GetByIdHandler(context *gin.Context) {
 		return
 	}
 
-}
-
-func (h *bookHandler) Test(ginContext *gin.Context) {
-	logrus.Warn("JWT START")
-	conn, _ := grpc.Dial("jwt-service:50001", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
-	defer conn.Close()
-
-	c := jwt.NewJwtServiceClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
-	resp, _ := c.GenerateToken(ctx, &jwt.JwtRequest{
-		Username: ginContext.Param("username"),
-	})
-
-	utils.APIResponse(ginContext, "JWT.", http.StatusOK, http.MethodGet, resp)
 }

@@ -4,14 +4,15 @@ package jwt;
 
 option go_package = "/jwt";
 
-message JwtRequest {
+message JwtUsername {
   string username = 1;
 }
 
-message JwtResponse {
+message JwtString {
   string token = 1;
 }
 
 service JwtService {
-  rpc generateToken(JwtRequest) returns (JwtResponse);
+  rpc generateToken(JwtUsername) returns (JwtString);
+  rpc parseToken(JwtString) returns (JwtUsername);
 }

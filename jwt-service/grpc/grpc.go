@@ -18,14 +18,25 @@ type JwtServer struct {
 	jwt.UnimplementedJwtServiceServer
 }
 
-func (j *JwtServer) GenerateToken(ctx context.Context, req *jwt.JwtRequest) (*jwt.JwtResponse, error) {
+func (j *JwtServer) GenerateToken(ctx context.Context, req *jwt.JwtUsername) (*jwt.JwtString, error) {
 	token, err := auth.GenerateToken(req.Username)
 	if err != nil {
 		return nil, err
 	}
 
-	result := &jwt.JwtResponse{Token: token}
-	logrus.Infof("JWT: %s", token)
+	result := &jwt.JwtString{Token: token}
+	return result, nil
+}
+
+func (j *JwtServer) ParseToken(ctx context.Context, req *jwt.JwtString) (*jwt.JwtUsername, error) {
+	username, err := auth.ParseToken(req.Token)
+	if err != nil {
+		logrus.Warnf("Cannot parse token: %s", err)
+		return nil, err
+	}
+
+	result := &jwt.JwtUsername{Username: username}
+	logrus.Infof("Username: %s", username)
 	return result, nil
 }
 
