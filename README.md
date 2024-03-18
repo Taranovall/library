@@ -19,3 +19,4 @@ The Library application is built using the following technologies:
 - gRPC
 - Microservices
 - JWT
+- PostgreSQL
